@@ -5,7 +5,10 @@ import path from "path";
 import type { ServerWebSocket } from "bun";
 import type { MyWebSocketEventHandler } from "./types";
 
-const db = drizzle(process.env.DB_FILE_NAME!);
+const db = drizzle({
+  connection: process.env.DATABASE_URL,
+  casing: "snake_case",
+});
 const eventsPath = path.join(__dirname, "events");
 const clients = new Set<ServerWebSocket<unknown>>();
 let routes = new Map<string, MyWebSocketEventHandler<unknown>>();

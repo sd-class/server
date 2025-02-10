@@ -12,6 +12,7 @@
   "dependencies": {
     "better-sqlite3": "^11.8.1",
     "dotenv": "^16.4.7",
-    "drizzle-orm": "^0.39.2"
+    "drizzle-orm": "^0.39.2",
+    "jose": "^5.9.6"
   }
 }
