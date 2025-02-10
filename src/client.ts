@@ -3,7 +3,7 @@ let ws = new WebSocket(url);
 ws.onopen = async () => {
   console.log("connected");
   for await (const line of console) {
-    ws.send(line);
+    ws.send(await transform("a/b", line));
   }
   const a = 10;
 };
@@ -16,3 +16,10 @@ ws.onclose = () => {
 ws.onerror = (err) => {
   console.error(err);
 };
+function transform(
+  event: string,
+  data: string | ArrayBufferLike | Blob | ArrayBufferView
+) {
+  if (data instanceof SharedArrayBuffer) data = new Uint8Array(data);
+  return new Blob([event, "\0", data]).arrayBuffer();
+}
