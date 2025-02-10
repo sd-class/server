@@ -2,58 +2,37 @@ import "dotenv/config";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { eq } from "drizzle-orm";
 import { usersTable } from "./db/schema";
+import type { ServerWebSocket } from "bun";
 
 const db = drizzle(process.env.DB_FILE_NAME!);
+const clients = new Set<ServerWebSocket<unknown>>();
 
-async function main() {
-  const user: typeof usersTable.$inferInsert = {
-    name: "John",
-    age: 30,
-    email: "john@example.com",
-  };
-
-  await db.insert(usersTable).values(user);
-  console.log("New user created!");
-
-  const users = await db.select().from(usersTable);
-  console.log("Getting all users from the database: ", users);
-  /*
-  const users: {
-    id: number;
-    name: string;
-    age: number;
-    email: string;
-  }[]
-  */
-
-  await db
-    .update(usersTable)
-    .set({
-      age: 31,
-    })
-    .where(eq(usersTable.email, user.email));
-  console.log("User info updated!");
-
-  await db.delete(usersTable).where(eq(usersTable.email, user.email));
-  console.log("User deleted!");
-
+if (import.meta.main) {
   Bun.serve({
     fetch(req, server) {
-      // upgrade the request to a WebSocket
-      if (server.upgrade(req)) {
-        return; // do not return a Response
-      }
+      if (server.upgrade(req)) return;
       return new Response("Upgrade failed", { status: 500 });
     },
     websocket: {
       message(ws, message) {
-        ws.send(message); // echo back the message
-      }, // a message is received
-      open(ws) {}, // a socket is opened
-      close(ws, code, message) {}, // a socket is closed
-      drain(ws) {}, // the socket is ready to receive more data
-    }, // handlers
+        console.log(message);
+        ws.send("reply:" + message);
+      },
+      async open(ws) {
+        console.log("open");
+        clients.add(ws);
+      },
+      close(ws, code, message) {
+        console.log("close", code, message);
+        clients.delete(ws);
+      },
+      drain(ws) {
+        console.log("drain");
+      }, // the socket is ready to receive more data
+    },
+    port: 3000,
   });
+  for await (const line of console) {
+    clients.forEach((ws) => ws.send(line));
+  }
 }
-
-main();
