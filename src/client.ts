@@ -5,7 +5,6 @@ ws.onopen = async () => {
   for await (const line of console) {
     ws.send(await transform("a/b", line));
   }
-  const a = 10;
 };
 ws.onmessage = (msg) => {
   console.log(msg);
@@ -16,7 +15,7 @@ ws.onclose = () => {
 ws.onerror = (err) => {
   console.error(err);
 };
-function transform(
+export function transform(
   event: string,
   data: string | ArrayBufferLike | Blob | ArrayBufferView
 ) {
